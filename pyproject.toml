@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "aiogram3-template"
+version = "0.1.0"
+description = ""
+authors = ["aldi <alkin.denis@gmail.com>"]
+readme = "README.md"
+packages = [{include = "aiogram3-template"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiogram = {url = "https://github.com/aiogram/aiogram/archive/refs/heads/dev-3.x.zip"}
+python-dotenv = "^0.21.0"
+loguru = "^0.6.0"
+fastapi = "^0.85.0"
+uvicorn = "^0.18.3"
+SQLAlchemy = "^1.4.42"
+alembic = "^1.8.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
