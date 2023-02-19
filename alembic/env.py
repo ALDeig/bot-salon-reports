@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from alembic import context
 
-from bot.src.services.db import tables
-from bot.src.services.db.base import Base
-from bot.configreader import config as app_config
+from app.src.services.db import tables
+from app.src.services.db.base import Base
+from app.configreader import config as app_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,9 +25,11 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-# from bot.src.services.db.base import metadata
+# from app.src.services.db.base import metadata
 
 target_metadata = Base.metadata
+if app_config.sqlite_dsn is None:
+    raise ValueError("sqlite_dsn not available")
 config.set_main_option(
     "sqlalchemy.url",
     app_config.sqlite_dsn + "?async_fallback=True"

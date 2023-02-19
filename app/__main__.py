@@ -7,9 +7,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from configreader import config
 from commands import set_commands
-from bot.src.dialogs.handlers import admin, user
-from bot.src.middleware.db import DbSessionMiddleware
-from bot.src.services.db.db_connect import create_session
+from app.src.dialogs.handlers import admin, user
+from app.src.middleware.db import DbSessionMiddleware
+from app.src.services.db.db_connect import create_session
 
 
 

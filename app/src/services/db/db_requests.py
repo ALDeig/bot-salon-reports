@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.src.services.db.tables import User
+from app.src.services.db.tables import User
 
 
 async def add_user(session: AsyncSession, user_id: int, name: str, role: str):

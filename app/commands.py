@@ -4,7 +4,7 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
 
-from bot.configreader import Config
+from app.configreader import Config
 
 
 async def set_commands(bot: Bot, config: Config):
