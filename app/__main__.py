@@ -9,7 +9,7 @@ from configreader import config
 from commands import set_commands
 from app.src.dialogs.handlers import admin, user
 from app.src.middleware.db import DbSessionMiddleware
-from app.src.services.db.db_connect import create_session
+from app.src.services.db.db_connect import create_session_factory
 
 
 
@@ -35,14 +35,17 @@ async def main():
     else:
         storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
-
-    session = create_session(config.sqlite_dsn)
+    
+    if config.sqlite_dsn is None:
+        raise ValueError("sqlite_dsn not avalible")
+    session_factory = create_session_factory(config.sqlite_dsn)
 
     # Регистрация фильтров
     include_filters(config.admins, dp)
 
     # Регистрация middlewares
-    dp.message.middleware(DbSessionMiddleware(session))
+    dp.message.middleware(DbSessionMiddleware(session_factory))
+    dp.callback_query.middleware(DbSessionMiddleware(session_factory))
 
     # Регистрация хендлеров
     include_routers(dp)
@@ -62,4 +65,5 @@ if __name__ == "__main__":
         # logger.info("Bot starting...")
         asyncio.run(main())
     except KeyboardInterrupt:
+        pass
         # logger.error("Bot stopping...")
