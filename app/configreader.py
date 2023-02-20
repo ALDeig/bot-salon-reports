@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+import logging
 
-from loguru import logger
 from pydantic import BaseSettings, PostgresDsn, RedisDsn, validator
 
 
@@ -38,6 +37,14 @@ class Config(BaseSettings):
 config = Config()
 
 
-def logging_setup():
-    pass
+def logging_setup(skip_loggers_list: list[str] | None = None):
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s %(name)s - %(module)s:%(funcName)s:%(lineno)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    if skip_loggers_list is not None:
+        for logger_name in skip_loggers_list:
+            logging.getLogger(logger_name).propagate = False
+
 

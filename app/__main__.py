@@ -5,12 +5,15 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.fsm.storage.memory import MemoryStorage
 # from aiogram.fsm.storage.redis import RedisStorage
 
-from configreader import config
+from configreader import config, logging_setup
 from commands import set_commands
 from app.src.dialogs.handlers import admin, user
 from app.src.middleware.db import DbSessionMiddleware
 from app.src.services.db.db_connect import create_session_factory
 
+
+logging_setup()
+logger = logging.getLogger(__name__)
 
 
 def include_routers(dp: Dispatcher):
@@ -24,10 +27,6 @@ def include_filters(admins: list[int], dp: Dispatcher):
 
 
 async def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    )
     bot = Bot(token=config.bot_token, parse_mode="HTML")
     if config.bot_fsm_storage == "redis":
         raise ValueError("redis is not install")
@@ -59,11 +58,9 @@ async def main():
         await bot.session.close()
 
 
-
 if __name__ == "__main__":
     try:
-        # logger.info("Bot starting...")
+        logger.info("Bot starting...")
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass
-        # logger.error("Bot stopping...")
+        logger.error("Bot stopping...")
