@@ -2,23 +2,28 @@ import logging
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
+from aiogram.types import (
+    BotCommand,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeChat,
+)
 
-from app.configreader import Config
+logger = logging.getLogger(__name__)
+
+ADMIN_COMMANS = [
+    BotCommand(command="start", description="Перезапустить бот"),
+]
 
 
-async def set_commands(bot: Bot, config: Config):
-    user_commands = [BotCommand(command="start", description="В начало")]
+async def set_commands(bot: Bot, admins: list[int]):
     await bot.set_my_commands(
-        commands=user_commands,
-        scope=BotCommandScopeDefault()
+        commands=[BotCommand(command="start", description="Перезапустить бот")],
+        scope=BotCommandScopeAllPrivateChats(),
     )
-    admin_commands = [
-        BotCommand(command="start", description="В начало")
-    ]
-    for admin_id in config.admins:
+    for admin in admins:
         try:
-            await bot.set_my_commands(commands=admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
-        except TelegramBadRequest:
-            logging.error(f"Can't set commands to admin with ID {admin_id}")
-
+            await bot.set_my_commands(
+                ADMIN_COMMANS, scope=BotCommandScopeChat(chat_id=admin)
+            )
+        except TelegramBadRequest as er:
+            logging.error(f"Can't set commands to admin with ID {admin}: {er.message}")
