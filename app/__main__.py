@@ -2,55 +2,52 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher, F
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-# from aiogram.fsm.storage.redis import RedisStorage
-
-from configreader import config, logging_setup
 from commands import set_commands
+
+from app.settings import settings
 from app.src.dialogs.handlers import admin, user
 from app.src.middleware.db import DbSessionMiddleware
-from app.src.services.db.db_connect import create_session_factory
+from app.src.services.db.base import session_factory
 
-
-logging_setup()
 logger = logging.getLogger(__name__)
 
 
-def include_routers(dp: Dispatcher):
-    dp.include_router(admin.router)
-    dp.include_router(user.router)
+def _include_routers(dp: Dispatcher):
+    dp.include_routers(user.router, admin.router)
 
 
-def include_filters(admins: list[int], dp: Dispatcher):
+def _include_filters(admins: list[int], dp: Dispatcher):
     dp.message.filter(F.chat.type == "private")
     admin.router.message.filter(F.chat.id.in_(admins))
 
 
-async def main():
-    bot = Bot(token=config.bot_token, parse_mode="HTML")
-    if config.bot_fsm_storage == "redis":
-        raise ValueError("redis is not install")
-        # storage = RedisStorage(config.redis_dsn)
-    else:
-        storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
-    
-    if config.sqlite_dsn is None:
-        raise ValueError("sqlite_dsn not avalible")
-    session_factory = create_session_factory(config.sqlite_dsn)
-
-    # Регистрация фильтров
-    include_filters(config.admins, dp)
-
-    # Регистрация middlewares
+def _middleware_registry(dp: Dispatcher):
     dp.message.middleware(DbSessionMiddleware(session_factory))
     dp.callback_query.middleware(DbSessionMiddleware(session_factory))
 
+
+async def main():
+    bot = Bot(
+        token=settings.TELEGRAM_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
+
+    # Регистрация фильтров
+    _include_filters(settings.ADMINS, dp)
+
+    # Регистрация middlewares
+    _middleware_registry(dp)
+
     # Регистрация хендлеров
-    include_routers(dp)
+    _include_routers(dp)
 
     # Установка команд для бота
-    await set_commands(bot, config)
+    await set_commands(bot, settings.ADMINS)
 
     try:
         await dp.start_polling(bot)
