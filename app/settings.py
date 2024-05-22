@@ -40,11 +40,19 @@ LOGGING_CONFIG = {
         "stream_handler": {
             "class": "logging.StreamHandler",
             "formatter": "default_formatter",
-        }
+        },
+        "file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "default_formatter",
+            "filename": "logs/app.log",
+            "maxBytes": 1024 * 1024,
+            "backupCount": 3
+        },
+
     },
     "loggers": {
         "root": {
-            "handlers": ["stream_handler"],
+            "handlers": ["stream_handler", "file_handler"],
             "level": settings.LOG_LEVEL,
             "propagate": True,
         },
