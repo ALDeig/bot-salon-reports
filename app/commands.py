@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 ADMIN_COMMANS = [
     BotCommand(command="start", description="Перезапустить бот"),
 ]
+USER_COMMANDS = [BotCommand(command="start", description="Перезапустить бот")]
 
 
 async def set_commands(bot: Bot, admins: list[int]):
     await bot.set_my_commands(
-        commands=[BotCommand(command="start", description="Перезапустить бот")],
+        commands=USER_COMMANDS,
         scope=BotCommandScopeAllPrivateChats(),
     )
     for admin in admins:
@@ -25,5 +26,5 @@ async def set_commands(bot: Bot, admins: list[int]):
             await bot.set_my_commands(
                 ADMIN_COMMANS, scope=BotCommandScopeChat(chat_id=admin)
             )
-        except TelegramBadRequest as er:
-            logging.error(f"Can't set commands to admin with ID {admin}: {er.message}")
+        except TelegramBadRequest:
+            logging.exception("Can't set commands to admin with ID %s", admin)

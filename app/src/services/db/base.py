@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 
 from app.settings import settings
 
 
-class Base(AsyncAttrs, DeclarativeBase):
-    pass
+class Base(MappedAsDataclass, AsyncAttrs, DeclarativeBase):
+    """Базовый класс моделей базы данных."""
 
 
 engine = create_async_engine(settings.DATABASE_URL)

@@ -5,8 +5,8 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from commands import set_commands
 
+from app.commands import set_commands
 from app.settings import settings
 from app.src.dialogs.handlers import admin, user
 from app.src.middleware.db import DbSessionMiddleware
@@ -15,16 +15,19 @@ from app.src.services.db.base import session_factory
 logger = logging.getLogger(__name__)
 
 
-def _include_routers(dp: Dispatcher):
+def _include_routers(dp: Dispatcher) -> None:
+    """Подключает роуты."""
     dp.include_routers(user.router, admin.router)
 
 
-def _include_filters(admins: list[int], dp: Dispatcher):
+def _include_filters(admins: list[int], dp: Dispatcher) -> None:
+    """Подключает фильтры."""
     dp.message.filter(F.chat.type == "private")
     admin.router.message.filter(F.chat.id.in_(admins))
 
 
-def _middleware_registry(dp: Dispatcher):
+def _middleware_registry(dp: Dispatcher) -> None:
+    """Подключает middleware."""
     dp.message.middleware(DbSessionMiddleware(session_factory))
     dp.callback_query.middleware(DbSessionMiddleware(session_factory))
 
@@ -60,4 +63,4 @@ if __name__ == "__main__":
         logger.info("Bot starting...")
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.error("Bot stopping...")
+        logger.exception("Bot stopping...")

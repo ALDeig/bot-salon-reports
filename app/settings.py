@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Настройки."""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     TELEGRAM_TOKEN: str
@@ -17,14 +19,14 @@ class Settings(BaseSettings):
     SQLITE_DSN: str | None = None
 
     @property
-    def DATABASE_URL(self) -> str:
+    def DATABASE_URL(self) -> str:  # noqa: N802
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
 
-settings = Settings()  # type: ignore
+settings = Settings()  # type: ignore[]
 
 
 LOGGING_CONFIG = {

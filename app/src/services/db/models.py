@@ -5,6 +5,8 @@ from app.src.services.db.base import Base
 
 
 class User(Base):
+    """Пользователи."""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
