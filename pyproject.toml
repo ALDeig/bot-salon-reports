@@ -13,6 +13,7 @@ alembic = "^1.13.1"
 aiogram = "^3.7.0"
 pydantic-settings = "^2.2.1"
 aiosqlite = "^0.20.0"
+gspread-asyncio = "^2.0.0"
 
 
 [build-system]

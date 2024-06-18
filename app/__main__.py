@@ -8,7 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.commands import set_commands
 from app.settings import settings
-from app.src.dialogs.handlers import admin, user
+from app.src.dialogs.handlers import admin, report, user
 from app.src.middleware.db import DbSessionMiddleware
 from app.src.services.db.base import session_factory
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def _include_routers(dp: Dispatcher) -> None:
     """Подключает роуты."""
-    dp.include_routers(user.router, admin.router)
+    dp.include_routers(user.router, admin.router, report.router)
 
 
 def _include_filters(admins: list[int], dp: Dispatcher) -> None:

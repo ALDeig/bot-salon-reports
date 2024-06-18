@@ -12,8 +12,12 @@ logger = logging.getLogger(__name__)
 
 ADMIN_COMMANS = [
     BotCommand(command="start", description="Перезапустить бот"),
+    BotCommand(command="report", description="Отправить отчёт"),
 ]
-USER_COMMANDS = [BotCommand(command="start", description="Перезапустить бот")]
+USER_COMMANDS = [
+    BotCommand(command="start", description="Перезапустить бот"),
+    BotCommand(command="report", description="Отправить отчёт"),
+]
 
 
 async def set_commands(bot: Bot, admins: list[int]):

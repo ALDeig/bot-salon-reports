@@ -2,3 +2,6 @@
 idea/
 *__pycache__/
 db/*.db
+*.log
+test.py
+creds.json
