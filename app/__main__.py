@@ -63,4 +63,4 @@ if __name__ == "__main__":
         logger.info("Bot starting...")
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.exception("Bot stopping...")
+        logger.warning("Bot stopping...")

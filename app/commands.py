@@ -10,9 +10,9 @@ from aiogram.types import (
 
 logger = logging.getLogger(__name__)
 
-ADMIN_COMMANS = [
+ADMIN_COMMANDS = [
     BotCommand(command="start", description="Перезапустить бот"),
-    BotCommand(command="report", description="Отправить отчёт"),
+    BotCommand(command="get_report", description="Получить отчёт"),
 ]
 USER_COMMANDS = [
     BotCommand(command="start", description="Перезапустить бот"),
@@ -28,7 +28,7 @@ async def set_commands(bot: Bot, admins: list[int]):
     for admin in admins:
         try:
             await bot.set_my_commands(
-                ADMIN_COMMANS, scope=BotCommandScopeChat(chat_id=admin)
+                ADMIN_COMMANDS, scope=BotCommandScopeChat(chat_id=admin)
             )
         except TelegramBadRequest:
             logging.exception("Can't set commands to admin with ID %s", admin)

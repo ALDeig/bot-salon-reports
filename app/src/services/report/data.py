@@ -1,16 +1,20 @@
 from dataclasses import dataclass
 
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.src.services.db.dao.salon_dao import SalonDao
 from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
 
 
-@dataclass
-class Answer:
+class Answer(BaseModel):
     """Ответ на каждый вопрос."""
 
     number: int
     data: str
     type: AnswerType
+    question: str
 
 
 @dataclass(slots=True, frozen=True)
@@ -37,6 +41,11 @@ async def get_questions() -> dict[int, Question]:
         )
         questions[index] = question
     return questions
+
+
+async def get_salons(db: AsyncSession) -> dict[str, int]:
+    salons = await SalonDao(db).find_all()
+    return {salon.name: salon.id for salon in salons}
 
 
 QUESTIONS = {

@@ -1,8 +1,8 @@
-from enum import Enum, auto
+from enum import Enum
 
 
-class AnswerType(Enum):
+class AnswerType(int, Enum):
     """Типы ответа."""
 
-    Text = auto()
-    Photo = auto()
+    Text = 1
+    Photo = 2
