@@ -110,6 +110,25 @@ class BaseDao(Generic[T]):
             return None
         return model_instance
 
+    async def add_all(self, objs: list[T]) -> None:
+        """Добавляет сразу несколько новых записей базу данных.
+
+        Args:
+        ----
+            objs (list[T]): Список экземпляров модели.
+
+        Returns:
+        -------
+            None
+
+        """
+        self._session.add_all(objs)
+        try:
+            await self._session.commit()
+        except IntegrityError:
+            logger.exception("IntegrityError. Data: %s", objs)
+            await self._session.rollback()
+
     async def insert_or_update(
         self, index_element: str, update_fields: set[str], **data
     ) -> None:

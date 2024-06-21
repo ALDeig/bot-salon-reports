@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.services.db.dao.user_dao import UserDao
+from app.src.services.db.dao.dao import UserDao
 
 
 async def save_user(

@@ -1,64 +1,93 @@
-from aiogram import Bot
+from collections.abc import Sequence
+from datetime import datetime
+
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.settings import settings
-from app.src.dialogs.keyboards.report import kb_skip
-from app.src.services.db.dao.report_dao import ReportDao
-from app.src.services.exceptions import BadAnswerTypeError
-from app.src.services.report.data import Answer, Question
+from app.src.services.db.dao.dao import AnswerDao, QuestionDao, ReportDao, SalonDao
+from app.src.services.db.models import MAnswer, MQuestion, MReport, MSalon
+from app.src.services.exceptions import BadAnswerTypeError, ReportInitError
 from app.src.services.report.enums import AnswerType
+from app.src.services.sheets.sheet import get_data_from_sheet
 
 
-async def send_question(question: Question, msg: Message):
-    kb = kb_skip if not question.require else None
-    await msg.answer(f"{question.text}\n\n{question.description}", reply_markup=kb)
+async def open_shift_is_exists(db: AsyncSession, user_id: int) -> bool:
+    report = await ReportDao(db).find_one_or_none(user_id=user_id, closed=None)
+    return report is not None
 
 
-def parse_answer(
-    number: int, report_type: AnswerType, msg: Message, question: str
-) -> Answer:
-    if report_type == AnswerType.Text:
-        if not msg.text:
-            raise BadAnswerTypeError
-        data = msg.text
-    else:
-        if not msg.photo:
-            raise BadAnswerTypeError
-        photo = msg.photo[-1]
-        data = photo.file_id
-    return Answer(number=number, data=data, type=report_type, question=question)
+async def get_salons(db: AsyncSession, **filter_by) -> Sequence[MSalon]:
+    return await SalonDao(db).find_all(**filter_by)
 
 
-async def finish_report(salon_id: int, answers: list[Answer], db: AsyncSession):
-    answers_json = [answer.model_dump() for answer in answers]
-    await ReportDao(db).insert_or_update(
-        "id", {"answers"}, id=salon_id, answers=answers_json
-    )
+class Report:
+    """Класс работы с отчетом."""
 
+    def __init__(
+        self,
+        session: AsyncSession,
+        report_id: int | None = None,
+    ) -> None:
+        self.report_id = report_id
+        self._session = session
 
-async def send_report(salon_id: int, bot: Bot, db: AsyncSession):
-    report = await ReportDao(db).find_one_or_none(id=salon_id)
-    if report is None:
-        await send_message(bot, "Нет отчета")
-        return
-    answers = [Answer.model_validate(answer) for answer in report.answers]
-    text = ""
-    for answer in answers:
-        if answer.type == AnswerType.Text:
-            text += f"<b>{answer.question}</b>\n{answer.data}\n\n"
+    async def init_report(self, salon_id: int, user_id: int) -> None:
+        report = await ReportDao(self._session).add(
+            MReport(salon_id=salon_id, user_id=user_id)
+        )
+        if report is None:
+            raise ReportInitError
+        await SalonDao(self._session).update({"shift_is_close": False}, id=salon_id)
+        self.report_id = report.id
+        await self._save_questions_from_sheet_for_report(report.id)
+
+    async def _save_questions_from_sheet_for_report(self, report_id: int) -> None:
+        sheet_data = await get_data_from_sheet()
+        questions = []
+        for row in sheet_data:
+            question = MQuestion(
+                report_id=report_id,
+                text=row[0],
+                description=row[2],
+                type=AnswerType.Photo if row[4] else AnswerType.Text,
+                is_require=bool(row[1]),
+            )
+            questions.append(question)
+        await QuestionDao(self._session).add_all(questions)
+
+    async def get_questions(self) -> Sequence[MQuestion]:
+        if self.report_id is None:
+            raise ReportInitError
+        return await QuestionDao(self._session).find_all(report_id=self.report_id)
+
+    async def save_answer(
+        self, question: MQuestion, msg: Message
+    ) -> Sequence[MQuestion]:
+        if question.type == AnswerType.Text:
+            if not msg.text:
+                raise BadAnswerTypeError
+            data = msg.text
         else:
-            if text:
-                await send_message(bot, text)
-                text = ""
-            await send_message(bot, answer.question, answer.data)
-    await send_message(bot, f"{text}\n\n<b>Конец отчета</b>".strip())
-    await ReportDao(db).delete(id=salon_id)
+            if not msg.photo:
+                raise BadAnswerTypeError
+            photo = msg.photo[-1]
+            data = photo.file_id
 
+        await AnswerDao(self._session).add(MAnswer(id=question.id, data=data))
+        return await self.get_questions()
 
-async def send_message(bot: Bot, text: str, photo: str | None = None) -> None:
-    for admin in settings.ADMINS:
-        if photo:
-            await bot.send_photo(admin, photo, caption=text)
-        else:
-            await bot.send_message(admin, text)
+    async def get_question(self, question_id: int) -> MQuestion:
+        return await QuestionDao(self._session).find_one(id=question_id)
+
+    async def close_report(self) -> bool:
+        questions = await self.get_questions()
+        for question in questions:
+            if question.is_require and not question.answer:
+                return False
+        report_dao = ReportDao(self._session)
+        await report_dao.update({"closed": datetime.now()}, id=self.report_id)  # noqa: DTZ005
+        report = await report_dao.find_one(id=self.report_id)
+        await SalonDao(self._session).update(
+            {"shift_is_close": True}, id=report.salon_id
+        )
+        return True

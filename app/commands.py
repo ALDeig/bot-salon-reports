@@ -31,4 +31,4 @@ async def set_commands(bot: Bot, admins: list[int]):
                 ADMIN_COMMANDS, scope=BotCommandScopeChat(chat_id=admin)
             )
         except TelegramBadRequest:
-            logging.exception("Can't set commands to admin with ID %s", admin)
+            logging.warning("Can't set commands to admin with ID %s", admin)

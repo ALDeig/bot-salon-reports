@@ -11,6 +11,7 @@ from app.settings import settings
 from app.src.dialogs.handlers import admin, report, user
 from app.src.middleware.db import DbSessionMiddleware
 from app.src.services.db.base import session_factory
+from app.src.services.scheduler import create_scheduler_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +53,14 @@ async def main():
     # Установка команд для бота
     await set_commands(bot, settings.ADMINS)
 
+    # init scheduler
+    scheduler = create_scheduler_tasks()
+
     try:
+        scheduler.start()
         await dp.start_polling(bot)
     finally:
+        scheduler.shutdown(wait=True)
         await bot.session.close()
 
 
