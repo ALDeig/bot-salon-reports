@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 ADMIN_COMMANDS = [
     BotCommand(command="start", description="Перезапустить бот"),
     BotCommand(command="get_report", description="Получить отчёт"),
+    BotCommand(command="close_shift", description="Закрыть смену"),
 ]
 USER_COMMANDS = [
     BotCommand(command="start", description="Перезапустить бот"),

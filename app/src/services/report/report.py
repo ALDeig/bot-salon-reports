@@ -20,6 +20,10 @@ async def get_salons(db: AsyncSession, **filter_by) -> Sequence[MSalon]:
     return await SalonDao(db).find_all(**filter_by)
 
 
+async def close_shift(db: AsyncSession, salon_id: int) -> None:
+    await SalonDao(db).update({"shift_is_close": True}, id=salon_id)
+
+
 class Report:
     """Класс работы с отчетом."""
 

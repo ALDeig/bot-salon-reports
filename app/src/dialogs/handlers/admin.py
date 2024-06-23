@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.dialogs.keyboards.admin import kb_select_report
 from app.src.dialogs.keyboards.report import kb_salons
 from app.src.services.admin import CheckReport
-from app.src.services.report.report import get_salons
+from app.src.services.report.report import close_shift, get_salons
 
 router = Router()
 
@@ -54,4 +54,29 @@ async def btn_select_report(
     checker = CheckReport(db)
     await checker.send_report(msg, int(data))
     await msg.answer("Готово")
+    await state.clear()
+
+
+@router.message(Command("close_shift"), flags={"db": True})
+async def cmd_close_shift(msg: Message, db: AsyncSession, state: FSMContext):
+    salons = await get_salons(db, shift_is_close=False)
+    if not salons:
+        await msg.answer("Все смены закрыты")
+        return
+    await msg.answer("Выберите салон", reply_markup=kb_salons(salons))
+    await state.set_state("close_shift")
+
+
+@router.callback_query(
+    StateFilter("close_shift"),
+    F.message.as_("msg"),
+    F.data.as_("data"),
+    flags={"db": True},
+)
+async def btn_select_shift_for_close(
+    call: CallbackQuery, msg: Message, data: str, db: AsyncSession, state: FSMContext
+):
+    await call.answer()
+    await close_shift(db, int(data))
+    await msg.answer("Смена закрыта.")
     await state.clear()
