@@ -28,17 +28,16 @@ class CheckReport:
             f"Смена открыта: {report.created}\nСмена закрыта: {report.closed}"
         )
         for question in report.questions:
-            answer = question.answer
-            if not answer:
+            if not question.answer:
                 await msg.answer(
                     f"<b>{question.text}</b>\n\n<em>Задание пропущено.</em>"
                 )
                 continue
             if question.type == AnswerType.Photo:
-                await msg.answer_photo(question.answer.data, caption=question.text)
+                await msg.answer_photo(question.answer, caption=question.text)
             else:
                 await msg.answer(
-                    f"<b>{question.text}</b>\n\n<em>{question.answer.data}</em>"
+                    f"<b>{question.text}</b>\n\n<em>{question.answer}</em>"
                 )
 
     @staticmethod

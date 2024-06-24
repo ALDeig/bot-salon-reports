@@ -4,8 +4,8 @@ from datetime import datetime
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.services.db.dao.dao import AnswerDao, QuestionDao, ReportDao, SalonDao
-from app.src.services.db.models import MAnswer, MQuestion, MReport, MSalon
+from app.src.services.db.dao.dao import QuestionDao, ReportDao, SalonDao
+from app.src.services.db.models import MQuestion, MReport, MSalon
 from app.src.services.exceptions import BadAnswerTypeError, ReportInitError
 from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
@@ -77,7 +77,7 @@ class Report:
             photo = msg.photo[-1]
             data = photo.file_id
 
-        await AnswerDao(self._session).add(MAnswer(id=question.id, data=data))
+        await QuestionDao(self._session).update({"answer": data}, id=question.id)
         return await self.get_questions()
 
     async def get_question(self, question_id: int) -> MQuestion:

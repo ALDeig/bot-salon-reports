@@ -62,18 +62,4 @@ class MQuestion(Base):
     description: Mapped[str] = mapped_column(Text)
     type: Mapped[AnswerType] = mapped_column(Integer)
     is_require: Mapped[bool] = mapped_column(Boolean)
-
-    answer: Mapped["MAnswer"] = relationship(
-        lazy="selectin", cascade="all, delete", init=False
-    )
-
-
-class MAnswer(Base):
-    """Ответы."""
-
-    __tablename__ = "answers"
-
-    id: Mapped[int] = mapped_column(
-        ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True
-    )
-    data: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)

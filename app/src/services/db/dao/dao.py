@@ -1,19 +1,15 @@
 from datetime import datetime
+
 import sqlalchemy as sa
+
 from app.src.services.db.dao.base_dao import BaseDao
-from app.src.services.db.models import MAnswer, MQuestion, MReport, MSalon, MUser
+from app.src.services.db.models import MQuestion, MReport, MSalon, MUser
 
 
 class QuestionDao(BaseDao[MQuestion]):
     """Класс работы с базой данных для таблицы Question."""
 
     model = MQuestion
-
-
-class AnswerDao(BaseDao[MAnswer]):
-    """Класс работы с базой данных для таблицы Answer."""
-
-    model = MAnswer
 
 
 class ReportDao(BaseDao[MReport]):
