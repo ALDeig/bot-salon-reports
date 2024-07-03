@@ -11,9 +11,15 @@ from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
 
 
-async def open_shift_is_exists(db: AsyncSession, user_id: int) -> bool:
+async def open_shift_is_exists(
+    db: AsyncSession, user_id: int
+) -> tuple[str, list[MQuestion]] | None:
     report = await ReportDao(db).find_one_or_none(user_id=user_id, closed=None)
-    return report is not None
+    if not report:
+        return None
+    salon = await SalonDao(db).find_one(id=report.salon_id)
+    text = f"У вас есть открытая смена в салоне: {salon.name}"
+    return text, report.questions
 
 
 async def get_salons(db: AsyncSession, **filter_by) -> Sequence[MSalon]:

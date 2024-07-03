@@ -15,7 +15,8 @@ router = Router()
 async def cmd_new_report(msg: Message, db: AsyncSession, state: FSMContext):
     shift_is_exist = await open_shift_is_exists(db, msg.chat.id)
     if shift_is_exist:
-        await msg.answer("У вас есть открытая смена.")
+        kb = kb_questions(shift_is_exist[1])
+        await msg.answer(shift_is_exist[0], reply_markup=kb)
         return
     salons = await get_salons(db, shift_is_close=True)
     if not salons:
@@ -54,7 +55,7 @@ async def btn_select_salon(
 async def btn_question(
     call: CallbackQuery, msg: Message, data: str, db: AsyncSession, state: FSMContext
 ):
-    await call.answer()
+    await call.answer(cache_time=30)
     _, question_id, report_id = data.split(":")
     question = await Report(db).get_question(int(question_id))
     await state.update_data(question=question, report_id=int(report_id))
