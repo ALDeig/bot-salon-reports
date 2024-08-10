@@ -1,7 +1,9 @@
+import logging
 from collections.abc import Sequence
 from datetime import datetime
 
 from aiogram.types import Message
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.services.db.dao.dao import QuestionDao, ReportDao, SalonDao
@@ -9,6 +11,8 @@ from app.src.services.db.models import MQuestion, MReport, MSalon
 from app.src.services.exceptions import BadAnswerTypeError, ReportInitError
 from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
+
+logger = logging.getLogger(__name__)
 
 
 async def open_shift_is_exists(
@@ -96,7 +100,11 @@ class Report:
                 return False
         report_dao = ReportDao(self._session)
         await report_dao.update({"closed": datetime.now()}, id=self.report_id)  # noqa: DTZ005
-        report = await report_dao.find_one(id=self.report_id)
+        try:
+            report = await report_dao.find_one(id=self.report_id)
+        except NoResultFound:
+            logger.error("Report not found: %s", self.report_id)  # noqa: TRY400
+            return False
         await SalonDao(self._session).update(
             {"shift_is_close": True}, id=report.salon_id
         )
