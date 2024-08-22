@@ -117,10 +117,6 @@ class BaseDao(Generic[T]):
         ----
             objs (list[T]): Список экземпляров модели.
 
-        Returns:
-        -------
-            None
-
         """
         self._session.add_all(objs)
         try:
