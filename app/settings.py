@@ -11,12 +11,21 @@ class Settings(BaseSettings):
     TELEGRAM_TOKEN: str
     ADMINS: list[int]
     LOG_LEVEL: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str
+    POSTGRES_DB: str
+    POSTGRES_PORT: int
+
     SQLITE_DSN: str
     TABLE_KEY: str
 
     @property
     def DATABASE_URL(self) -> str:  # noqa: N802
-        return self.SQLITE_DSN
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
 
 settings = Settings()  # type: ignore[]
