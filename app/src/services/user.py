@@ -1,11 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.src.services.db.dao.dao import UserDao
+from app.src.services.db.dao.holder import HolderDao
 
 
 async def save_user(
-    session: AsyncSession, user_id: int, full_name: str, username: str | None
+    dao: HolderDao, user_id: int, full_name: str, username: str | None
 ):
-    await UserDao(session).insert_or_nothing(
+    await dao.user_dao.insert_or_nothing(
         index_element="id", id=user_id, full_name=full_name, username=username
     )

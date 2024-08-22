@@ -2,23 +2,25 @@ from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, ContentType, Message
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.dialogs.keyboards.report import kb_questions, kb_salons
+from app.src.services.db.dao.holder import HolderDao
 from app.src.services.exceptions import BadAnswerTypeError
-from app.src.services.report.report import Report, get_salons, open_shift_is_exists
+from app.src.services.report.report import Report, get_salons, get_shift_is_exists
 
 router = Router()
 
 
-@router.message(Command("report"), flags={"db": True})
-async def cmd_new_report(msg: Message, db: AsyncSession, state: FSMContext):
-    shift_is_exist = await open_shift_is_exists(db, msg.chat.id)
-    if shift_is_exist:
-        kb = kb_questions(shift_is_exist[1])
-        await msg.answer(shift_is_exist[0], reply_markup=kb)
+@router.message(Command("report"), flags={"dao": True})
+async def cmd_new_report(msg: Message, dao: HolderDao, state: FSMContext):
+    shift = await get_shift_is_exists(dao, msg.chat.id)
+    if shift:
+        kb = kb_questions(shift.report.questions)
+        await msg.answer(
+            f"У вас есть открытая смена в салоне: {shift.salon.name}", reply_markup=kb
+        )
         return
-    salons = await get_salons(db, shift_is_close=True)
+    salons = await get_salons(dao, shift_is_close=True)
     if not salons:
         await msg.answer("Во всех салонах смены открыты.")
         return
@@ -32,15 +34,15 @@ async def cmd_new_report(msg: Message, db: AsyncSession, state: FSMContext):
     StateFilter("select_salon"),
     F.message.as_("msg"),
     F.data.as_("data"),
-    flags={"db": True},
+    flags={"dao": True},
 )
 async def btn_select_salon(
-    call: CallbackQuery, msg: Message, data: str, db: AsyncSession, state: FSMContext
+    call: CallbackQuery, msg: Message, data: str, dao: HolderDao, state: FSMContext
 ) -> None:
     await call.answer("Собираю вопросы... Подождите не много!")
-    report = Report(db)
-    await report.init_report(int(data), msg.chat.id)
-    questions = await report.get_questions()
+    report_manager = Report(dao)
+    report = await report_manager.init_report(int(data), msg.chat.id)
+    questions = await report_manager.get_questions(report.id)
     kb = kb_questions(questions)
     await msg.answer("Выбери вопрос", reply_markup=kb)
     await state.clear()
@@ -50,14 +52,14 @@ async def btn_select_salon(
     F.data.startswith("ask"),
     F.data.as_("data"),
     F.message.as_("msg"),
-    flags={"db": True},
+    flags={"dao": True},
 )
 async def btn_question(
-    call: CallbackQuery, msg: Message, data: str, db: AsyncSession, state: FSMContext
+    call: CallbackQuery, msg: Message, data: str, dao: HolderDao, state: FSMContext
 ):
     await call.answer(cache_time=30)
     _, question_id, report_id = data.split(":")
-    question = await Report(db).get_question(int(question_id))
+    question = await Report(dao).get_question(int(question_id))
     await state.update_data(question=question, report_id=int(report_id))
     await msg.answer(f"{question.text}\n\n{question.description}")
     await state.set_state("report")
@@ -66,16 +68,17 @@ async def btn_question(
 @router.message(
     StateFilter("report"),
     F.content_type.in_((ContentType.TEXT, ContentType.PHOTO)),
-    flags={"db": True},
+    flags={"dao": True},
 )
-async def get_answer(msg: Message, db: AsyncSession, state: FSMContext) -> None:
+async def get_answer(msg: Message, dao: HolderDao, state: FSMContext) -> None:
     data = await state.get_data()
-    report = Report(session=db, report_id=data["report_id"])
+    report = Report(dao=dao)  # report_id=data["report_id"])
     try:
-        questions = await report.save_answer(data["question"], msg)
+        await report.save_answer(data["question"], msg)
     except BadAnswerTypeError:
         await msg.answer("Неверный формат ответа")
         return
+    questions = await report.get_questions(data["report_id"])
     kb = kb_questions(questions)
     await msg.answer("Ответ сохранен", reply_markup=kb)
     await state.clear()
@@ -85,13 +88,13 @@ async def get_answer(msg: Message, db: AsyncSession, state: FSMContext) -> None:
     F.data.startswith("finish"),
     F.message.as_("msg"),
     F.data.as_("data"),
-    flags={"db": True},
+    flags={"dao": True},
 )
 async def btn_close_shift(
-    call: CallbackQuery, msg: Message, data: str, db: AsyncSession
+    call: CallbackQuery, msg: Message, data: str, dao: HolderDao
 ):
     await call.answer()
-    report = Report(db, report_id=int(data.split(":")[-1]))
-    is_done = await report.close_report()
+    report = Report(dao)  # report_id=int(data.split(":")[-1]))
+    is_done = await report.close_report(int(data.split(":")[-1]))
     text = "Готово!" if is_done else "Не все обязательные задания выполнены."
     await msg.answer(text)

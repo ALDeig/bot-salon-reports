@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 
 from aiogram.types import Message
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.services.db.dao.dao import UserDao, ReportDao
+from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MQuestion, MReport, MUser
 from app.src.services.report.enums import AnswerType
 
@@ -11,15 +10,15 @@ from app.src.services.report.enums import AnswerType
 class CheckReport:
     """Проверка отчетов."""
 
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+    def __init__(self, dao: HolderDao) -> None:
+        self._dao = dao
 
     async def get_reports(self, salon_id: int) -> Sequence[MReport]:
-        return await ReportDao(self._session).find_all(salon_id=salon_id)
+        return await self._dao.report_dao.find_all(salon_id=salon_id)
 
     async def send_report(self, msg: Message, report_id: int) -> None:
-        report = await ReportDao(self._session).find_one(id=report_id)
-        user = await UserDao(self._session).find_one(id=report.user_id)
+        report = await self._dao.report_dao.find_one(id=report_id)
+        user = await self._dao.user_dao.find_one(id=report.user_id)
         if not report.closed:
             await msg.answer(self._text_not_done_report(report.questions, user))
             return
