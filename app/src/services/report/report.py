@@ -36,6 +36,9 @@ async def get_salons(dao: HolderDao, **filter_by) -> Sequence[MSalon]:
 
 
 async def close_shift(dao: HolderDao, salon_id: int) -> None:
+    report = await dao.report_dao.find_one_or_none(salon_id=salon_id, closed=None)
+    if report:
+        await dao.report_dao.update({"closed": datetime.now()}, id=report.id)  # noqa: DTZ005
     await dao.salon_dao.update({"shift_is_close": True}, id=salon_id)
 
 
