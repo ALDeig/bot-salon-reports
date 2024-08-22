@@ -13,7 +13,7 @@ class MUser(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    full_name: Mapped[str]
+    full_name: Mapped[str] = mapped_column(Text)
     username: Mapped[str] = mapped_column(Text, nullable=True)
 
 
@@ -25,7 +25,7 @@ class MSalon(Base):
     id: Mapped[int] = mapped_column(
         Integer, init=False, primary_key=True, autoincrement=True
     )
-    name: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(20))
     shift_is_close: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -35,7 +35,7 @@ class MReport(Base, kw_only=True):
     __tablename__ = "reports"
 
     id: Mapped[int] = mapped_column(
-        Integer, init=False, primary_key=True, autoincrement=True
+        BigInteger, init=False, primary_key=True, autoincrement=True
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     salon_id: Mapped[int] = mapped_column(ForeignKey("salons.id"))
