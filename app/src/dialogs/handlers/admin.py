@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -15,6 +17,7 @@ from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MReport, MUser
 from app.src.services.report.report import close_shift, get_salons
 
+logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -69,6 +72,13 @@ async def btn_select_report(
                     await msg.answer(message)
             await msg.answer("Готово")
         case _:
+            logger.warning(
+                "Report not found: %s. Message created: %s. User: %d %s",
+                data,
+                msg.date,
+                call.from_user.id,
+                call.from_user.username
+            )
             await msg.answer("Отчет не найден")
     await state.clear()
 
