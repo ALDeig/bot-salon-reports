@@ -101,7 +101,7 @@ class Report:
         try:
             report = await self._dao.report_dao.find_one(id=report_id)
         except NoResultFound:
-            logger.error("Report not found: %s", report_id)  # noqa: TRY400
+            logger.warning("Report not found: %s", report_id)
             return False
         await self._dao.salon_dao.update(
             {"shift_is_close": True}, id=report.salon_id
