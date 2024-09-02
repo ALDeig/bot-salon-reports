@@ -5,8 +5,14 @@ from aiogram.types import CallbackQuery, Message
 
 from app.src.dialogs.keyboards.admin import kb_select_report
 from app.src.dialogs.keyboards.report import kb_salons
-from app.src.services.admin import CheckReport
+from app.src.services.admin import (
+    CheckReport,
+    CheckReportResponse,
+    messages_done_report,
+    text_not_done_report,
+)
 from app.src.services.db.dao.holder import HolderDao
+from app.src.services.db.models import MReport, MUser
 from app.src.services.report.report import close_shift, get_salons
 
 router = Router()
@@ -50,8 +56,20 @@ async def btn_select_report(
 ):
     await call.answer()
     checker = CheckReport(dao)
-    await checker.send_report(msg, int(data))
-    await msg.answer("Готово")
+    result = await checker.check_report(int(data))
+    match result:
+        case CheckReportResponse("not_done", report=MReport() as r, user=MUser() as u):
+            await msg.answer(text_not_done_report(r.questions, u))
+        case CheckReportResponse("done", report=MReport() as r, user=MUser() as u):
+            messages = messages_done_report(r, u)
+            for message in messages:
+                if isinstance(message, tuple):
+                    await msg.answer_photo(message[0], caption=message[1])
+                else:
+                    await msg.answer(message)
+            await msg.answer("Готово")
+        case _:
+            await msg.answer("Отчет не найден")
     await state.clear()
 
 
