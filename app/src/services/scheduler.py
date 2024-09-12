@@ -7,7 +7,7 @@ from app.src.services.db.dao.dao import ReportDao
 
 
 async def delete_old_reports():
-    old_date = datetime.now() - timedelta(7)  # noqa: DTZ005
+    old_date = datetime.now() - timedelta(3)  # noqa: DTZ005
     async with session_factory() as session:
         await ReportDao(session).delete_old_reports(old_date)
 
