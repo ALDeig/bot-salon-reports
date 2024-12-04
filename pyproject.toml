@@ -15,6 +15,7 @@ pydantic-settings = "^2.2.1"
 aiosqlite = "^0.20.0"
 gspread-asyncio = "^2.0.0"
 apscheduler = "^3.10.4"
+asyncpg = "^0.30.0"
 
 
 [build-system]
