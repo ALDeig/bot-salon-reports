@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -5,9 +7,10 @@ from aiogram.types import CallbackQuery, ContentType, Message
 
 from app.src.dialogs.keyboards.report import kb_questions, kb_salons
 from app.src.services.db.dao.holder import HolderDao
-from app.src.services.exceptions import BadAnswerTypeError
+from app.src.services.exceptions import BadAnswerTypeError, ReportNotFoundError
 from app.src.services.report.report import Report, get_salons, get_shift_is_exists
 
+logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -90,11 +93,18 @@ async def get_answer(msg: Message, dao: HolderDao, state: FSMContext) -> None:
     F.data.as_("data"),
     flags={"dao": True},
 )
-async def btn_close_shift(
-    call: CallbackQuery, msg: Message, data: str, dao: HolderDao
-):
+async def btn_close_shift(call: CallbackQuery, msg: Message, data: str, dao: HolderDao):
     await call.answer()
     report = Report(dao)  # report_id=int(data.split(":")[-1]))
-    is_done = await report.close_report(int(data.split(":")[-1]))
-    text = "Готово!" if is_done else "Не все обязательные задания выполнены."
-    await msg.answer(text)
+    try:
+        is_done = await report.close_report(int(data.split(":")[-1]))
+    except ReportNotFoundError:
+        logger.warning(
+            "Report not found by user: %s, %s",
+            call.from_user.id,
+            call.from_user.username,
+        )
+        await msg.answer("Ошибка закрытия смены. Попробуйте закрыть повторно.")
+    else:
+        text = "Готово!" if is_done else "Не все обязательные задания выполнены."
+        await msg.answer(text)

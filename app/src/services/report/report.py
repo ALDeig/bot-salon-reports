@@ -8,7 +8,11 @@ from sqlalchemy.exc import NoResultFound
 
 from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MQuestion, MReport, MSalon
-from app.src.services.exceptions import BadAnswerTypeError, ReportInitError
+from app.src.services.exceptions import (
+    BadAnswerTypeError,
+    ReportInitError,
+    ReportNotFoundError,
+)
 from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
 
@@ -97,12 +101,12 @@ class Report:
         for question in questions:
             if question.is_require and not question.answer:
                 return False
-        await self._dao.report_dao.update({"closed": datetime.now()}, id=report_id)  # noqa: DTZ005
         try:
             report = await self._dao.report_dao.find_one(id=report_id)
-        except NoResultFound:
+        except NoResultFound as er:
             logger.warning("Report not found: %s", report_id)
-            return False
+            raise ReportNotFoundError from er
+        await self._dao.report_dao.update({"closed": datetime.now()}, id=report_id)  # noqa: DTZ005
         await self._dao.salon_dao.update(
             {"shift_is_close": True}, id=report.salon_id
         )

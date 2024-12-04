@@ -4,3 +4,7 @@ class BadAnswerTypeError(Exception):
 
 class ReportInitError(Exception):
     """Отчет не инициализирован или не удалось инициализировать."""
+
+
+class ReportNotFoundError(Exception):
+    """Отчет не найден."""
