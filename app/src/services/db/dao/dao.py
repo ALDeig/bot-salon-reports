@@ -16,7 +16,7 @@ class QuestionDao(BaseDao[MQuestion]):
         query = (
             sa.select(MQuestion)
             .filter_by(**filter_by)
-            .order_by(MQuestion.answer.desc(), MQuestion.is_require)
+            .order_by(MQuestion.answer.desc(), MQuestion.is_require.desc())
         )
         response = await self._session.scalars(query)
         return response.all()
