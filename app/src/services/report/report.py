@@ -94,7 +94,9 @@ class Report:
         await self._dao.question_dao.add_all(questions)
 
     async def get_questions(self, report_id: int) -> Sequence[MQuestion]:
-        return await self._dao.question_dao.find_all(report_id=report_id)
+        return await self._dao.question_dao.find_all_order_by_answer(
+            report_id=report_id
+        )
 
     async def save_answer(self, question: MQuestion, msg: Message) -> None:
         if question.type == AnswerType.Text:

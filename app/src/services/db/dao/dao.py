@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 
 import sqlalchemy as sa
@@ -10,6 +11,11 @@ class QuestionDao(BaseDao[MQuestion]):
     """Класс работы с базой данных для таблицы Question."""
 
     model = MQuestion
+
+    async def find_all_order_by_answer(self, **filter_by) -> Sequence[MQuestion]:
+        query = sa.select(self.model).filter_by(**filter_by).order_by(self.model.answer)
+        response = await self._session.scalars(query)
+        return response.all()
 
 
 class ReportDao(BaseDao[MReport]):
