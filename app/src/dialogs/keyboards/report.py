@@ -32,7 +32,7 @@ def kb_questions(questions: Sequence[MQuestion]) -> InlineKeyboardMarkup:
             text="Закрыть смену", callback_data=f"finish:{questions[0].report_id}"
         )
     )
-    builder.adjust(2)
+    builder.adjust(1)
     return builder.as_markup()
 
 
