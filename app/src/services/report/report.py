@@ -57,31 +57,37 @@ class Report:
             MReport(salon_id=salon_id, user_id=user_id)
         )
         if report is None:
-            raise ReportInitError
+            raise ReportInitError(
+                message="Не удалось инициализировать отчет. Попробуйте еще раз."
+            )
         await self._dao.salon_dao.update({"shift_is_close": False}, id=salon_id)
         await self._save_questions_from_sheet_for_report(report.id)
         return report
 
     async def _save_questions_from_sheet_for_report(self, report_id: int) -> None:
         sheet_data = await get_data_from_sheet()
-        questions = [
-            MQuestion(
-                report_id=report_id,
-                text=row[0],
-                description=row[2],
-                type=AnswerType.Photo if row[4] else AnswerType.Text,
-                is_require=bool(row[1]),
-            )
-            for row in sheet_data
-        ]
+        try:
+            questions = [
+                MQuestion(
+                    report_id=report_id,
+                    text=row[0],
+                    description=row[2],
+                    type=AnswerType.Photo if row[4] else AnswerType.Text,
+                    is_require=bool(row[1]),
+                )
+                for row in sheet_data
+                if row
+            ]
+        except IndexError as er:
+            raise ReportInitError(
+                message="Не удалось собрать вопросы из таблицы. Попробуйте еще раз."
+            ) from er
         await self._dao.question_dao.add_all(questions)
 
     async def get_questions(self, report_id: int) -> Sequence[MQuestion]:
         return await self._dao.question_dao.find_all(report_id=report_id)
 
-    async def save_answer(
-        self, question: MQuestion, msg: Message
-    ) -> None:
+    async def save_answer(self, question: MQuestion, msg: Message) -> None:
         if question.type == AnswerType.Text:
             if not msg.text:
                 raise BadAnswerTypeError
@@ -107,7 +113,5 @@ class Report:
             logger.warning("Report not found: %s", report_id)
             raise ReportNotFoundError from er
         await self._dao.report_dao.update({"closed": datetime.now()}, id=report_id)  # noqa: DTZ005
-        await self._dao.salon_dao.update(
-            {"shift_is_close": True}, id=report.salon_id
-        )
+        await self._dao.salon_dao.update({"shift_is_close": True}, id=report.salon_id)
         return True

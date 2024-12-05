@@ -7,7 +7,11 @@ from aiogram.types import CallbackQuery, ContentType, Message
 
 from app.src.dialogs.keyboards.report import kb_questions, kb_salons
 from app.src.services.db.dao.holder import HolderDao
-from app.src.services.exceptions import BadAnswerTypeError, ReportNotFoundError
+from app.src.services.exceptions import (
+    BadAnswerTypeError,
+    ReportInitError,
+    ReportNotFoundError,
+)
 from app.src.services.report.report import Report, get_salons, get_shift_is_exists
 
 logger = logging.getLogger(__name__)
@@ -44,11 +48,16 @@ async def btn_select_salon(
 ) -> None:
     await call.answer("Собираю вопросы... Подождите не много!")
     report_manager = Report(dao)
-    report = await report_manager.init_report(int(data), msg.chat.id)
-    questions = await report_manager.get_questions(report.id)
-    kb = kb_questions(questions)
-    await msg.answer("Выбери вопрос", reply_markup=kb)
-    await state.clear()
+    try:
+        report = await report_manager.init_report(int(data), msg.chat.id)
+    except ReportInitError as er:
+        await msg.answer(er.message)
+    else:
+        questions = await report_manager.get_questions(report.id)
+        kb = kb_questions(questions)
+        await msg.answer("Выбери вопрос", reply_markup=kb)
+    finally:
+        await state.clear()
 
 
 @router.callback_query(
