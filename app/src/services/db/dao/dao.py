@@ -14,9 +14,9 @@ class QuestionDao(BaseDao[MQuestion]):
 
     async def find_all_order_by_answer(self, **filter_by) -> Sequence[MQuestion]:
         query = (
-            sa.select(self.model)
+            sa.select(MQuestion)
             .filter_by(**filter_by)
-            .order_by(self.model.answer.desc())
+            .order_by(MQuestion.answer.desc(), MQuestion.is_require)
         )
         response = await self._session.scalars(query)
         return response.all()
