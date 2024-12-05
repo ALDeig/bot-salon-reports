@@ -13,7 +13,11 @@ class QuestionDao(BaseDao[MQuestion]):
     model = MQuestion
 
     async def find_all_order_by_answer(self, **filter_by) -> Sequence[MQuestion]:
-        query = sa.select(self.model).filter_by(**filter_by).order_by(self.model.answer)
+        query = (
+            sa.select(self.model)
+            .filter_by(**filter_by)
+            .order_by(self.model.answer.desc())
+        )
         response = await self._session.scalars(query)
         return response.all()
 
