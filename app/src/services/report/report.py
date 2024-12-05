@@ -27,6 +27,15 @@ class OpenShift:
     report: MReport
 
 
+@dataclass(slots=True, frozen=True)
+class ReportStatus:
+    """Статус отчета."""
+
+    salon: str
+    questions: int
+    answers: int
+
+
 async def get_shift_is_exists(dao: HolderDao, user_id: int) -> OpenShift | None:
     report = await dao.report_dao.find_one_or_none(user_id=user_id, closed=None)
     if report is None:
@@ -102,16 +111,25 @@ class Report:
     async def get_question(self, question_id: int) -> MQuestion:
         return await self._dao.question_dao.find_one(id=question_id)
 
-    async def close_report(self, report_id: int) -> bool:
-        questions = await self.get_questions(report_id)
-        for question in questions:
-            if question.is_require and not question.answer:
-                return False
+    async def close_report(self, report_id: int) -> ReportStatus | None:
         try:
             report = await self._dao.report_dao.find_one(id=report_id)
         except NoResultFound as er:
             logger.warning("Report not found: %s", report_id)
             raise ReportNotFoundError from er
+        for question in report.questions:
+            if question.is_require and not question.answer:
+                return
         await self._dao.report_dao.update({"closed": datetime.now()}, id=report_id)  # noqa: DTZ005
         await self._dao.salon_dao.update({"shift_is_close": True}, id=report.salon_id)
-        return True
+        return await self._get_report_status(report)
+
+    async def _get_report_status(self, report: MReport) -> ReportStatus:
+        salon = await self._dao.salon_dao.find_one(id=report.salon_id)
+        answers = 0
+        for question in report.questions:
+            if question.answer:
+                answers += 1
+        return ReportStatus(
+            salon=salon.name, questions=len(report.questions), answers=answers
+        )

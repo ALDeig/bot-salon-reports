@@ -46,6 +46,7 @@ async def cmd_new_report(msg: Message, dao: HolderDao, state: FSMContext):
 async def btn_select_salon(
     call: CallbackQuery, msg: Message, data: str, dao: HolderDao, state: FSMContext
 ) -> None:
+    await msg.delete()
     await call.answer("Собираю вопросы... Подождите не много!")
     report_manager = Report(dao)
     try:
@@ -69,6 +70,7 @@ async def btn_select_salon(
 async def btn_question(
     call: CallbackQuery, msg: Message, data: str, dao: HolderDao, state: FSMContext
 ):
+    await msg.delete()
     await call.answer(cache_time=30)
     _, question_id, report_id = data.split(":")
     question = await Report(dao).get_question(int(question_id))
@@ -106,7 +108,7 @@ async def btn_close_shift(call: CallbackQuery, msg: Message, data: str, dao: Hol
     await call.answer()
     report = Report(dao)  # report_id=int(data.split(":")[-1]))
     try:
-        is_done = await report.close_report(int(data.split(":")[-1]))
+        report_status = await report.close_report(int(data.split(":")[-1]))
     except ReportNotFoundError:
         logger.warning(
             "Report not found by user: %s, %s",
@@ -115,5 +117,14 @@ async def btn_close_shift(call: CallbackQuery, msg: Message, data: str, dao: Hol
         )
         await msg.answer("Ошибка закрытия смены. Попробуйте закрыть повторно.")
     else:
-        text = "Готово!" if is_done else "Не все обязательные задания выполнены."
+        if report_status:
+            await msg.delete()
+            text = (
+                f"Смена в салоне {report_status.salon} закрыта!\n"
+                f"Все обязательные задания выполнены.\n"
+                f"Вопросов: {report_status.questions}\n"
+                f"Ответов: {report_status.answers}"
+            )
+        else:
+            text = "Не все обязательные задания выполнены."
         await msg.answer(text)
