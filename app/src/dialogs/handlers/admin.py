@@ -14,7 +14,7 @@ from app.src.services.admin import (
     text_not_done_report,
 )
 from app.src.services.db.dao.holder import HolderDao
-from app.src.services.db.models import MReport, MUser
+from app.src.services.db.models import MReport, MSalon, MUser
 from app.src.services.report.report import close_shift, get_salons
 
 logger = logging.getLogger(__name__)
@@ -61,10 +61,14 @@ async def btn_select_report(
     checker = CheckReport(dao)
     result = await checker.check_report(int(data))
     match result:
-        case CheckReportResponse("not_done", report=MReport() as r, user=MUser() as u):
+        case CheckReportResponse(
+            "not_done", report=MReport() as r, user=MUser() as u, salon=MSalon() as s
+        ):
             await msg.answer(text_not_done_report(r.questions, u))
-        case CheckReportResponse("done", report=MReport() as r, user=MUser() as u):
-            messages = messages_done_report(r, u)
+        case CheckReportResponse(
+            "done", report=MReport() as r, user=MUser() as u, salon=MSalon() as s
+        ):
+            messages = messages_done_report(r, u, s)
             for message in messages:
                 if isinstance(message, tuple):
                     await msg.answer_photo(message[0], caption=message[1])
