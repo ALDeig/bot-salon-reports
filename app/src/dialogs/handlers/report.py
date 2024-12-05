@@ -10,6 +10,7 @@ from app.src.services.db.dao.holder import HolderDao
 from app.src.services.exceptions import (
     BadAnswerTypeError,
     ReportInitError,
+    ReportIsClosedError,
     ReportNotFoundError,
 )
 from app.src.services.report.report import Report, get_salons, get_shift_is_exists
@@ -73,10 +74,17 @@ async def btn_question(
     await msg.delete()
     await call.answer(cache_time=30)
     _, question_id, report_id = data.split(":")
-    question = await Report(dao).get_question(int(question_id))
-    await state.update_data(question=question, report_id=int(report_id))
-    await msg.answer(f"{question.text}\n\n{question.description}")
-    await state.set_state("report")
+    try:
+        question = await Report(dao).get_question(int(question_id))
+    except ReportIsClosedError:
+        await msg.answer(
+            "Эта смена закрыта. "
+            "Нажмите /report чтобы открыть новую смену или продолжить открытую"
+        )
+    else:
+        await state.update_data(question=question, report_id=int(report_id))
+        await msg.answer(f"{question.text}\n\n{question.description}")
+        await state.set_state("report")
 
 
 @router.message(

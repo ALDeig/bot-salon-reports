@@ -12,3 +12,7 @@ class ReportInitError(Exception):
 
 class ReportNotFoundError(Exception):
     """Отчет не найден."""
+
+
+class ReportIsClosedError(Exception):
+    """Отчет закрыт."""

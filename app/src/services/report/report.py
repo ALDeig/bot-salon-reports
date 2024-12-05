@@ -11,6 +11,7 @@ from app.src.services.db.models import MQuestion, MReport, MSalon
 from app.src.services.exceptions import (
     BadAnswerTypeError,
     ReportInitError,
+    ReportIsClosedError,
     ReportNotFoundError,
 )
 from app.src.services.report.enums import AnswerType
@@ -111,7 +112,11 @@ class Report:
         await self._dao.question_dao.update({"answer": data}, id=question.id)
 
     async def get_question(self, question_id: int) -> MQuestion:
-        return await self._dao.question_dao.find_one(id=question_id)
+        question = await self._dao.question_dao.find_one(id=question_id)
+        report = await self._dao.report_dao.find_one_or_none(id=question.report_id)
+        if not report or report.closed:
+            raise ReportIsClosedError
+        return question
 
     async def close_report(self, report_id: int) -> ReportStatus | None:
         try:
