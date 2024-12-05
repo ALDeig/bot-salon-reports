@@ -61,9 +61,10 @@ def messages_done_report(
 ) -> list[str | tuple[str, str]]:
     messages = []
     messages.append(
-        f"Отчет от администратора: @{user.username}/{user.full_name}\n"
-        f"Салон: {salon.name}\n"
-        f"Смена открыта: {report.created}\nСмена закрыта: {report.closed}"
+        f"Отчет от администратора: @{user.username}/<em>{user.full_name}</em>\n"
+        f"Салон: <em>{salon.name}</em>\n"
+        f"Смена открыта: <em>{report.created:%Y-%m-%d %H:%M}</em>\n"
+        f"Смена закрыта: <em>{report.closed:%Y-%m-%d %H:%M}</em>"
     )
     for question in report.questions:
         if not question.answer:
