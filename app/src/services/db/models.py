@@ -45,7 +45,10 @@ class MReport(Base, kw_only=True):
     )
 
     questions: Mapped[list["MQuestion"]] = relationship(
-        lazy="selectin", cascade="all, delete", init=False
+        lazy="selectin",
+        cascade="all, delete",
+        init=False,
+        order_by="[MQuestion.answer.desc(), MQuestion.is_require.desc()]",
     )
 
 
