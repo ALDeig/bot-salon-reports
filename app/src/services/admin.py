@@ -68,10 +68,13 @@ def text_not_done_report(questions: Sequence[MQuestion], user: MUser) -> str:
 def messages_done_report(report: MReport, user: MUser, salon: MSalon) -> list[Answer]:
     messages = []
     messages.append(
-        f"Отчет от администратора: @{user.username} / <em>{user.full_name}</em>\n"
-        f"Салон: <em>{salon.name}</em>\n"
-        f"Смена открыта: <em>{report.created:%Y-%m-%d %H:%M}</em>\n"
-        f"Смена закрыта: <em>{report.closed:%Y-%m-%d %H:%M}</em>"
+        Answer(
+            AnswerType.Text,
+            f"Отчет от администратора: @{user.username}/<em>{user.full_name}</em>\n"
+            f"Салон: <em>{salon.name}</em>\n"
+            f"Смена открыта: <em>{report.created:%Y-%m-%d %H:%M}</em>\n"
+            f"Смена закрыта: <em>{report.closed:%Y-%m-%d %H:%M}</em>",
+        )
     )
     for question in report.questions:
         if not question.answer:
