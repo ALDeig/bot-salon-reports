@@ -81,6 +81,9 @@ async def btn_select_report(
                     case Answer(AnswerType.Photo, text=text, content=str(content)):
                         await msg.answer_photo(content, caption=text)
                     case _:
+                        logger.warning(
+                            "Неизвестный тип ответа: %s. Report_id: %s", message, data
+                        )
                         await msg.answer("Неизвестный тип ответа")
             await msg.answer("Готово")
         case _:
@@ -89,7 +92,7 @@ async def btn_select_report(
                 data,
                 msg.date,
                 call.from_user.id,
-                call.from_user.username
+                call.from_user.username,
             )
             await msg.answer("Отчет не найден")
     await state.clear()
