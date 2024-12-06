@@ -16,3 +16,7 @@ class ReportNotFoundError(Exception):
 
 class ReportIsClosedError(Exception):
     """Отчет закрыт."""
+
+
+class QuestionTypeUnknownError(Exception):
+    """Тип вопроса неизвестен."""
