@@ -6,3 +6,4 @@ class AnswerType(int, Enum):
 
     Text = 1
     Photo = 2
+    Video = 3

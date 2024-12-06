@@ -21,6 +21,15 @@ class CheckReportResponse:
     salon: MSalon | None = None
 
 
+@dataclass
+class Answer:
+    """Ответ на вопрос."""
+
+    type: AnswerType
+    text: str
+    content: str | None = None
+
+
 class CheckReport:
     """Проверка отчетов."""
 
@@ -56,9 +65,7 @@ def text_not_done_report(questions: Sequence[MQuestion], user: MUser) -> str:
     return done_questions + not_done_questions
 
 
-def messages_done_report(
-    report: MReport, user: MUser, salon: MSalon
-) -> list[str | tuple[str, str]]:
+def messages_done_report(report: MReport, user: MUser, salon: MSalon) -> list[Answer]:
     messages = []
     messages.append(
         f"Отчет от администратора: @{user.username} / <em>{user.full_name}</em>\n"
@@ -68,10 +75,23 @@ def messages_done_report(
     )
     for question in report.questions:
         if not question.answer:
-            messages.append(f"<b>{question.text}</b>\n\n<em>Задание пропущено.</em>")
+            messages.append(
+                Answer(
+                    text=f"<b>{question.text}</b>\n\n<em>Задание пропущено.</em>",
+                    type=AnswerType.Text,
+                )
+            )
             continue
-        if question.type == AnswerType.Photo:
-            messages.append((question.answer, question.text))
-        else:
-            messages.append(f"<b>{question.text}</b>\n\n<em>{question.answer}</em>")
+        match question.type:
+            case AnswerType.Text:
+                answer = Answer(
+                    text=f"<b>{question.text}</b>\n\n<em>{question.answer}</em>",
+                    type=AnswerType.Text,
+                )
+            case _:
+                answer = Answer(
+                    text=question.text, type=question.type, content=question.answer
+                )
+
+        messages.append(answer)
     return messages

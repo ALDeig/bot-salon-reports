@@ -8,6 +8,7 @@ from aiogram.types import CallbackQuery, Message
 from app.src.dialogs.keyboards.admin import kb_select_report
 from app.src.dialogs.keyboards.report import kb_salons
 from app.src.services.admin import (
+    Answer,
     CheckReport,
     CheckReportResponse,
     messages_done_report,
@@ -15,6 +16,7 @@ from app.src.services.admin import (
 )
 from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MReport, MSalon, MUser
+from app.src.services.report.enums import AnswerType
 from app.src.services.report.report import close_shift, get_salons
 
 logger = logging.getLogger(__name__)
@@ -70,10 +72,16 @@ async def btn_select_report(
         ):
             messages = messages_done_report(r, u, s)
             for message in messages:
-                if isinstance(message, tuple):
-                    await msg.answer_photo(message[0], caption=message[1])
-                else:
-                    await msg.answer(message)
+                match message:
+                    case Answer(AnswerType.Text, text=text):
+                        await msg.answer(text)
+                    case Answer(AnswerType.Video, text=text, content=str(content)):
+                        await msg.answer(text)
+                        await msg.answer_video_note(content)
+                    case Answer(AnswerType.Photo, text=text, content=str(content)):
+                        await msg.answer_photo(content, caption=text)
+                    case _:
+                        await msg.answer("Неизвестный тип ответа")
             await msg.answer("Готово")
         case _:
             logger.warning(

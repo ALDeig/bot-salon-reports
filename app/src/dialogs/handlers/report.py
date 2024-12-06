@@ -89,7 +89,7 @@ async def btn_question(
 
 @router.message(
     StateFilter("report"),
-    F.content_type.in_((ContentType.TEXT, ContentType.PHOTO)),
+    F.content_type.in_((ContentType.TEXT, ContentType.PHOTO, ContentType.VIDEO_NOTE)),
     flags={"dao": True},
 )
 async def get_answer(msg: Message, dao: HolderDao, state: FSMContext) -> None:

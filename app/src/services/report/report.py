@@ -10,6 +10,7 @@ from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MQuestion, MReport, MSalon
 from app.src.services.exceptions import (
     BadAnswerTypeError,
+    QuestionTypeUnknownError,
     ReportInitError,
     ReportIsClosedError,
     ReportNotFoundError,
@@ -41,6 +42,11 @@ async def get_shift_is_exists(dao: HolderDao, user_id: int) -> OpenShift | None:
     report = await dao.report_dao.find_one_or_none(user_id=user_id, closed=None)
     if report is None:
         return
+    if not report.questions:
+        await dao.report_dao.update({"closed": datetime.now()}, id=report.id)  # noqa: DTZ005
+        await dao.salon_dao.update({"shift_is_close": True}, id=report.salon_id)
+        logger.warning("В сохраненном отчете нет вопросов. Report_id: %s", report.id)
+        return
     salon = await dao.salon_dao.find_one(id=report.salon_id)
     return OpenShift(salon=salon, report=report)
 
@@ -70,8 +76,12 @@ class Report:
             raise ReportInitError(
                 message="Не удалось инициализировать отчет. Попробуйте еще раз."
             )
+        try:
+            await self._save_questions_from_sheet_for_report(report.id)
+        except ReportInitError:
+            await self._dao.report_dao.delete(id=report.id)
+            raise
         await self._dao.salon_dao.update({"shift_is_close": False}, id=salon_id)
-        await self._save_questions_from_sheet_for_report(report.id)
         return report
 
     async def _save_questions_from_sheet_for_report(self, report_id: int) -> None:
@@ -82,13 +92,13 @@ class Report:
                     report_id=report_id,
                     text=row[0],
                     description=row[2],
-                    type=AnswerType.Photo if row[4] else AnswerType.Text,
+                    type=_get_type_answer(row),
                     is_require=bool(row[1]),
                 )
                 for row in sheet_data
                 if row
             ]
-        except IndexError as er:
+        except (IndexError, QuestionTypeUnknownError) as er:
             raise ReportInitError(
                 message="Не удалось собрать вопросы из таблицы. Попробуйте еще раз."
             ) from er
@@ -100,15 +110,21 @@ class Report:
         )
 
     async def save_answer(self, question: MQuestion, msg: Message) -> None:
-        if question.type == AnswerType.Text:
-            if not msg.text:
-                raise BadAnswerTypeError
-            data = msg.text
-        else:
-            if not msg.photo:
-                raise BadAnswerTypeError
-            photo = msg.photo[-1]
-            data = photo.file_id
+        match question.type:
+            case AnswerType.Text:
+                if not msg.text:
+                    raise BadAnswerTypeError
+                data = msg.text
+            case AnswerType.Photo:
+                if not msg.photo:
+                    raise BadAnswerTypeError
+                photo = msg.photo[-1]
+                data = photo.file_id
+            case AnswerType.Video:
+                if not msg.video_note:
+                    raise BadAnswerTypeError
+                data = msg.video_note.file_id
+
         await self._dao.question_dao.update({"answer": data}, id=question.id)
 
     async def get_question(self, question_id: int) -> MQuestion:
@@ -140,3 +156,17 @@ class Report:
         return ReportStatus(
             salon=salon.name, questions=len(report.questions), answers=answers
         )
+
+
+def _get_type_answer(row: list[str]) -> AnswerType:
+    """Возвращает тип ответа."""
+    match row:
+        case _ if row[3]:
+            return AnswerType.Video
+        case _ if row[4]:
+            return AnswerType.Photo
+        case _ if row[5]:
+            return AnswerType.Text
+        case _:
+            logger.warning("Unknown question type: %s", row)
+            raise QuestionTypeUnknownError
