@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from typing import Any, Generic, TypeVar
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
