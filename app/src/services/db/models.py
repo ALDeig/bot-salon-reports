@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.src.services.db.base import Base
 from app.src.services.report.enums import AnswerType
+from app.src.services.utils import get_time
 
 
 class MUser(Base):
@@ -39,7 +40,7 @@ class MReport(Base, kw_only=True):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     salon_id: Mapped[int] = mapped_column(ForeignKey("salons.id"))
-    created: Mapped[datetime] = mapped_column(DateTime, default_factory=datetime.now)
+    created: Mapped[datetime] = mapped_column(DateTime, default_factory=get_time)
     closed: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, default=None
     )
