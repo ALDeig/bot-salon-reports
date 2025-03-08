@@ -40,9 +40,11 @@ class MReport(Base, kw_only=True):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     salon_id: Mapped[int] = mapped_column(ForeignKey("salons.id"))
-    created: Mapped[datetime] = mapped_column(DateTime, default_factory=get_time)
+    created: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default_factory=get_time
+    )
     closed: Mapped[datetime | None] = mapped_column(
-        DateTime, nullable=True, default=None
+        DateTime(timezone=True), nullable=True, default=None
     )
 
     questions: Mapped[list["MQuestion"]] = relationship(
