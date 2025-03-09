@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    TIMESTAMP,
+    BigInteger,
+    Boolean,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.src.services.db.base import Base
@@ -41,10 +49,10 @@ class MReport(Base, kw_only=True):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     salon_id: Mapped[int] = mapped_column(ForeignKey("salons.id"))
     created: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default_factory=get_time
+        TIMESTAMP(timezone=True), default_factory=get_time
     )
     closed: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=None
+        TIMESTAMP(timezone=True), nullable=True, default=None
     )
 
     questions: Mapped[list["MQuestion"]] = relationship(
