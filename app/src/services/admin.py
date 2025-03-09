@@ -7,6 +7,7 @@ from sqlalchemy.exc import NoResultFound
 from app.src.services.db.dao.holder import HolderDao
 from app.src.services.db.models import MQuestion, MReport, MSalon, MUser
 from app.src.services.report.enums import AnswerType
+from app.src.services.utils import TZ_INFO
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,19 @@ def text_not_done_report(questions: Sequence[MQuestion], user: MUser) -> str:
 
 def messages_done_report(report: MReport, user: MUser, salon: MSalon) -> list[Answer]:
     messages = []
+    open_time = report.created.astimezone(TZ_INFO).strftime("%Y-%m-%d %H:%M")
+    closed_time = (
+        f"{report.closed.astimezone(TZ_INFO):%Y-%m-%d %H:%M}"
+        if report.closed
+        else "Не закрыта"
+    )
     messages.append(
         Answer(
             AnswerType.Text,
             f"Отчет от администратора: @{user.username}/<em>{user.full_name}</em>\n"
             f"Салон: <em>{salon.name}</em>\n"
-            f"Смена открыта: <em>{report.created:%Y-%m-%d %H:%M}</em>\n"
-            f"Смена закрыта: <em>{report.closed:%Y-%m-%d %H:%M}</em>",
+            f"Смена открыта: <em>{open_time}</em>\n"
+            f"Смена закрыта: <em>{closed_time}</em>",
         )
     )
     for question in report.questions:

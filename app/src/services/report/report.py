@@ -17,7 +17,6 @@ from app.src.services.exceptions import (
 )
 from app.src.services.report.enums import AnswerType
 from app.src.services.sheets.sheet import get_data_from_sheet
-from app.src.services.utils import TZ
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ async def get_shift_is_exists(dao: HolderDao, user_id: int) -> OpenShift | None:
         return
     if not report.questions:
         await dao.report_dao.update(
-            {"closed": func.timezone(TZ, func.current_timestamp())}, id=report.id
+            {"closed": func.now()}, id=report.id
         )
         await dao.salon_dao.update({"shift_is_close": True}, id=report.salon_id)
         logger.warning("В сохраненном отчете нет вопросов. Report_id: %s", report.id)
@@ -62,7 +61,7 @@ async def close_shift(dao: HolderDao, salon_id: int) -> None:
     report = await dao.report_dao.find_one_or_none(salon_id=salon_id, closed=None)
     if report:
         await dao.report_dao.update(
-            {"closed": func.timezone(TZ, func.current_timestamp())}, id=report.id
+            {"closed": func.now()}, id=report.id
         )
     await dao.salon_dao.update({"shift_is_close": True}, id=salon_id)
 
@@ -149,7 +148,7 @@ class Report:
             if question.is_require and not question.answer:
                 return
         await self._dao.report_dao.update(
-            {"closed": func.timezone(TZ, func.current_timestamp())}, id=report_id
+            {"closed": func.now()}, id=report_id
         )
         await self._dao.salon_dao.update({"shift_is_close": True}, id=report.salon_id)
         return await self._get_report_status(report)
