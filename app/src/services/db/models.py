@@ -1,19 +1,22 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     TIMESTAMP,
+    DateTime,
     BigInteger,
     Boolean,
     ForeignKey,
     Integer,
     String,
     Text,
+    func
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.src.services.db.base import Base
 from app.src.services.report.enums import AnswerType
-from app.src.services.utils import get_time
+from app.src.services.utils import TZ
 
 
 class MUser(Base):
@@ -49,7 +52,7 @@ class MReport(Base, kw_only=True):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     salon_id: Mapped[int] = mapped_column(ForeignKey("salons.id"))
     created: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=get_time
+        TIMESTAMP(timezone=True), default=func.timezone(TZ, func.now())
     )
     closed: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True, default=None
