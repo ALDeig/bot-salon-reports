@@ -1,8 +1,8 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-tz = ZoneInfo("Europe/Moscow")
+TZ = "Europe/Moscow"
 
 
 def get_time() -> datetime:
-    return datetime.now(tz)
+    return datetime.now(ZoneInfo(TZ))
